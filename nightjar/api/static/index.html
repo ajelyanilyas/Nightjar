@@ -94,6 +94,43 @@ header{
 .btn-ghost{background:rgba(255,255,255,.06);color:var(--ink-2);border-color:var(--glass-border);
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .btn-ghost:hover{background:rgba(255,255,255,.12);color:var(--ink)}
+.caret{font-size:10px;opacity:.7}
+
+/* attack menu */
+.replay{position:relative}
+.replay-menu{position:absolute;top:calc(100% + 10px);right:0;width:290px;z-index:60;
+  background:linear-gradient(180deg,rgba(20,24,42,.97),rgba(13,18,32,.97));
+  backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);
+  border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:8px;
+  display:flex;flex-direction:column;gap:2px;
+  box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 50px rgba(99,102,241,.15);
+  opacity:0;visibility:hidden;transform:translateY(-8px) scale(.97);
+  transition:opacity .25s var(--ee),visibility .25s,transform .3s var(--ee)}
+.replay-menu.open{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+.rm-item{display:flex;align-items:center;gap:13px;width:100%;text-align:left;
+  padding:12px 13px;border-radius:12px;border:1px solid transparent;background:transparent;
+  cursor:pointer;color:var(--ink);transition:all .2s var(--ee);font-family:inherit}
+.rm-item:hover{background:rgba(255,255,255,.05);border-color:var(--line)}
+.rm-ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:17px;
+  background:rgba(99,102,241,.15);flex-shrink:0}
+.rm-item:nth-child(2) .rm-ic{background:rgba(236,72,153,.15)}
+.rm-item:nth-child(3) .rm-ic{background:rgba(74,222,128,.15)}
+.rm-body{display:flex;flex-direction:column;gap:2px}
+.rm-t{font-family:var(--font-sans);font-weight:500;font-size:14px;letter-spacing:-.01em}
+.rm-s{font-family:var(--font-body);font-size:11.5px;color:var(--ink-3)}
+
+/* toast */
+.toast{position:fixed;bottom:26px;left:50%;z-index:80;
+  transform:translateX(-50%) translateY(20px);
+  background:linear-gradient(135deg,rgba(20,24,42,.97),rgba(13,18,32,.97));
+  backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);
+  border:1px solid rgba(99,102,241,.4);border-radius:100px;padding:12px 22px;
+  font-family:var(--font-body);font-size:13px;color:var(--ink);white-space:nowrap;
+  box-shadow:0 20px 50px rgba(0,0,0,.5),0 0 40px rgba(99,102,241,.2);
+  display:flex;align-items:center;gap:10px;opacity:0;visibility:hidden;
+  transition:opacity .35s var(--ee),transform .35s var(--ee),visibility .35s}
+.toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+.toast::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);flex-shrink:0}
 
 /* ============ layout ============ */
 .wrap{max-width:1440px;margin:0 auto;padding:26px 28px 60px;display:flex;flex-direction:column;gap:18px}
@@ -115,12 +152,13 @@ header{
 .kpi::before{content:'';position:absolute;top:-30%;right:-30%;width:150px;height:150px;
   background:radial-gradient(circle,rgba(99,102,241,.25),transparent 70%);filter:blur(30px);opacity:0;transition:opacity .8s}
 .kpi:hover::before{opacity:1}
-.kpi .n{font-family:var(--font-sans);font-weight:500;font-size:clamp(34px,4vw,52px);letter-spacing:-.04em;line-height:1;
-  background:var(--grad-a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kpi .n{font-family:var(--font-sans);font-weight:600;font-size:clamp(34px,4vw,52px);letter-spacing:-.04em;line-height:1;
+  color:#fff;
+  text-shadow:0 0 6px rgba(255,255,255,.85),0 0 18px rgba(165,180,252,.65),0 0 38px rgba(99,102,241,.45)}
 .kpi .l{font-family:var(--font-body);font-size:12.5px;color:var(--ink-2);margin-top:12px}
-.kpi.k2 .n{background:linear-gradient(135deg,#fff,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
-.kpi.k3 .n{background:linear-gradient(135deg,#fff,var(--green));-webkit-background-clip:text;background-clip:text;color:transparent}
-.kpi.k4 .n{background:linear-gradient(135deg,#fff,var(--pink-soft));-webkit-background-clip:text;background-clip:text;color:transparent}
+.kpi.k2 .n{text-shadow:0 0 6px rgba(255,255,255,.85),0 0 18px rgba(34,211,238,.65),0 0 38px rgba(34,211,238,.4)}
+.kpi.k3 .n{text-shadow:0 0 6px rgba(255,255,255,.85),0 0 18px rgba(74,222,128,.6),0 0 38px rgba(74,222,128,.4)}
+.kpi.k4 .n{text-shadow:0 0 6px rgba(255,255,255,.85),0 0 18px rgba(249,168,212,.65),0 0 38px rgba(236,72,153,.4)}
 
 /* timeline */
 #timeline svg{width:100%;height:92px;display:block}
@@ -192,7 +230,23 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <span class="spacer"></span>
   <span class="live hide-sm"><span class="dot" id="live"></span> live · <span id="updated">—</span></span>
   <button class="btn btn-ghost" id="pauseBtn">Pause</button>
-  <button class="btn btn-primary" id="replayBtn">▶ Replay attack</button>
+  <div class="replay" id="replay">
+    <button class="btn btn-primary" id="replayBtn">▶ Launch attack <span class="caret">▾</span></button>
+    <div class="replay-menu" id="replayMenu" role="menu">
+      <button class="rm-item" role="menuitem" data-scenario="ssh" data-label="SSH brute force">
+        <span class="rm-ic">🔑</span>
+        <span class="rm-body"><span class="rm-t">SSH brute force</span><span class="rm-s">Failed logins + user enum · T1110</span></span>
+      </button>
+      <button class="rm-item" role="menuitem" data-scenario="web" data-label="Web attack">
+        <span class="rm-ic">🌐</span>
+        <span class="rm-body"><span class="rm-t">Web attack</span><span class="rm-s">SQLi, traversal, scanning · T1190</span></span>
+      </button>
+      <button class="rm-item" role="menuitem" data-scenario="full" data-label="Full assault">
+        <span class="rm-ic">💥</span>
+        <span class="rm-body"><span class="rm-t">Full assault</span><span class="rm-s">Every scenario at once</span></span>
+      </button>
+    </div>
+  </div>
 </header>
 
 <div class="wrap">
@@ -230,6 +284,8 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <a class="tm-credit" href="https://templatemo.com" target="_blank" rel="nofollow noopener" aria-label="Design by TemplateMo">
   <span class="tm-dot"></span><span>Design: TemplateMo</span>
@@ -310,10 +366,36 @@ function drawTimeline(tl){
        </linearGradient></defs>${bars}</svg>`;
 }
 
-$("replayBtn").addEventListener("click", async () => {
-  const b = $("replayBtn"); b.disabled = true; b.textContent = "Replaying…";
-  try { await fetch("/api/replay?scenario=full", {method:"POST"}); await refresh(); }
-  finally { b.disabled = false; b.textContent = "▶ Replay attack"; }
+// --- attack menu + toast ---
+const replayBtn = $("replayBtn"), replayMenu = $("replayMenu"), replayWrap = $("replay");
+const closeReplay = () => replayMenu.classList.remove("open");
+replayBtn.addEventListener("click", (e) => { e.stopPropagation(); replayMenu.classList.toggle("open"); });
+document.addEventListener("click", (e) => { if (!replayWrap.contains(e.target)) closeReplay(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeReplay(); });
+
+let toastTimer;
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 4200);
+}
+
+replayMenu.querySelectorAll(".rm-item").forEach(item => {
+  item.addEventListener("click", async () => {
+    const { scenario, label } = item.dataset;
+    closeReplay();
+    const old = replayBtn.innerHTML;
+    replayBtn.disabled = true; replayBtn.textContent = "Launching…";
+    try {
+      const r = await fetch("/api/replay?scenario=" + scenario, { method: "POST" });
+      const j = await r.json();
+      await refresh();
+      toast(`Launched ${label} — ${j.alerts} alert(s) detected`);
+    } catch (e) {
+      toast("Launch failed — is the server running?");
+    } finally {
+      replayBtn.disabled = false; replayBtn.innerHTML = old;
+    }
+  });
 });
 $("pauseBtn").addEventListener("click", () => {
   paused = !paused;

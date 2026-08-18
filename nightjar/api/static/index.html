@@ -4,86 +4,203 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Nightjar — mini-SIEM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0b0f17; --panel: #121826; --panel2: #0e1420;
-    --border: #1f2a3d; --text: #e6edf6; --muted: #8aa0bd; --accent: #4ea1ff;
-    --critical: #d946ef; --high: #ef4444; --medium: #f59e0b; --low: #38bdf8; --info: #64748b;
-    --ok: #22c55e;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font: 14px/1.5 ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, monospace;
-  }
-  header {
-    display: flex; align-items: center; gap: 14px; padding: 14px 22px;
-    border-bottom: 1px solid var(--border); background: var(--panel2); position: sticky; top: 0; z-index: 5;
-  }
-  header h1 { font-size: 18px; margin: 0; letter-spacing: .5px; }
-  header .sub { color: var(--muted); font-size: 12px; }
-  header .spacer { flex: 1; }
-  button {
-    background: var(--accent); color: #04101f; border: 0; border-radius: 6px;
-    padding: 8px 14px; font-weight: 700; cursor: pointer; font-family: inherit;
-  }
-  button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  button:disabled { opacity: .5; cursor: default; }
-  .wrap { padding: 20px; max-width: 1400px; margin: 0 auto; }
-  .grid { display: grid; gap: 16px; }
-  .kpis { grid-template-columns: repeat(4, 1fr); }
-  .cols { grid-template-columns: 1.6fr 1fr; align-items: start; }
-  @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2,1fr);} .cols{grid-template-columns:1fr;} }
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 0 0 12px; }
-  .kpi .n { font-size: 30px; font-weight: 800; }
-  .kpi .l { color: var(--muted); font-size: 12px; }
-  .sevbars { display: flex; flex-direction: column; gap: 8px; }
-  .sevrow { display: grid; grid-template-columns: 70px 1fr 30px; align-items: center; gap: 8px; }
-  .sevrow .bar { height: 12px; border-radius: 6px; }
-  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
-  .sev-critical { background: rgba(217,70,239,.15); color: var(--critical); }
-  .sev-high { background: rgba(239,68,68,.15); color: var(--high); }
-  .sev-medium { background: rgba(245,158,11,.15); color: var(--medium); }
-  .sev-low { background: rgba(56,189,248,.15); color: var(--low); }
-  .sev-info { background: rgba(100,116,139,.2); color: var(--info); }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); font-size: 13px; }
-  th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
-  td.mono, .ip { font-variant-numeric: tabular-nums; }
-  .feed { display: flex; flex-direction: column; gap: 10px; max-height: 620px; overflow: auto; }
-  .alert { border: 1px solid var(--border); border-left-width: 4px; border-radius: 8px; padding: 10px 12px; background: var(--panel2); }
-  .alert.critical { border-left-color: var(--critical); }
-  .alert.high { border-left-color: var(--high); }
-  .alert.medium { border-left-color: var(--medium); }
-  .alert.low { border-left-color: var(--low); }
-  .alert.info { border-left-color: var(--info); }
-  .alert .top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .alert .title { font-weight: 700; }
-  .alert .meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
-  .alert .evid { color: var(--muted); font-size: 11.5px; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .8; }
-  .mitre { color: var(--accent); font-size: 11px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); display: inline-block; box-shadow: 0 0 8px var(--ok); }
-  a { color: var(--accent); }
-  .empty { color: var(--muted); padding: 20px; text-align: center; }
+/* ============================================================
+   Nightjar dashboard — skinned with the TemplateMo "Lustro"
+   design language (glassmorphism, ambient gradients, Space
+   Grotesk / DM Sans / JetBrains Mono). https://templatemo.com
+   ============================================================ */
+:root{
+  --ee:cubic-bezier(0.19,1,0.22,1);
+  --eq:cubic-bezier(0.77,0,0.175,1);
+  --bg:#0a0e1a; --bg-2:#0d1220;
+  --ink:#ffffff;
+  --ink-2:rgba(255,255,255,.7);
+  --ink-3:rgba(255,255,255,.5);
+  --ink-4:rgba(255,255,255,.3);
+  --line:rgba(255,255,255,.1);
+  --line-2:rgba(255,255,255,.06);
+  --glass-bg:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+  --glass-border:rgba(255,255,255,.1);
+  --glass-blur:blur(40px);
+  --indigo:#6366f1; --indigo-soft:#a5b4fc;
+  --pink:#ec4899; --pink-soft:#f9a8d4;
+  --cyan:#22d3ee; --green:#4ade80; --amber:#fbbf24; --red:#ef4444;
+  --grad-a:linear-gradient(135deg,#fff 0%,#a5b4fc 50%,#ec4899 100%);
+  --grad-b:linear-gradient(135deg,#6366f1,#ec4899);
+  --font-sans:'Space Grotesk',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  /* severity palette */
+  --sev-critical:var(--pink);
+  --sev-high:var(--red);
+  --sev-medium:var(--amber);
+  --sev-low:var(--cyan);
+  --sev-info:var(--ink-3);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:var(--font-body);-webkit-font-smoothing:antialiased;
+  position:relative;overflow-x:hidden;
+}
+/* Ambient background (from Lustro .deck::before / ::after) */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(circle at 15% 12%,rgba(99,102,241,.22) 0%,transparent 50%),
+    radial-gradient(circle at 85% 85%,rgba(236,72,153,.15) 0%,transparent 50%),
+    radial-gradient(circle at 50% 50%,rgba(34,211,238,.07) 0%,transparent 60%);
+  animation:ambient 14s ease-in-out infinite alternate}
+@keyframes ambient{to{opacity:.7;transform:scale(1.05)}}
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(ellipse at center,black 20%,transparent 82%);
+  -webkit-mask-image:radial-gradient(ellipse at center,black 20%,transparent 82%)}
+.app{position:relative;z-index:1}
+
+/* custom scrollbars */
+*{scrollbar-width:thin;scrollbar-color:rgba(165,180,252,.3) transparent}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(165,180,252,.35),rgba(236,72,153,.3));border-radius:100px;border:2px solid transparent;background-clip:padding-box}
+*::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,rgba(165,180,252,.6),rgba(236,72,153,.5));background-clip:padding-box;border:2px solid transparent}
+
+/* ============ header ============ */
+header{
+  position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:16px;
+  padding:18px 28px;
+  background:linear-gradient(180deg,rgba(10,14,26,.85),rgba(10,14,26,.45));
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--line-2);
+}
+.brand{display:flex;align-items:center;gap:12px;font-family:var(--font-sans);font-weight:600;font-size:17px;letter-spacing:-.01em}
+.brand .logo{width:30px;height:30px;border-radius:9px;background:var(--grad-b);position:relative;flex-shrink:0;box-shadow:0 6px 18px rgba(99,102,241,.35)}
+.brand .logo::after{content:'🛡️';position:absolute;inset:0;display:grid;place-items:center;font-size:15px}
+.brand .sub{font-family:var(--font-mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);margin-left:4px}
+.spacer{flex:1}
+.live{display:flex;align-items:center;gap:9px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.live .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:pip 2s infinite}
+@keyframes pip{0%,100%{opacity:1}50%{opacity:.3}}
+.btn{font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;border-radius:100px;
+  padding:10px 20px;display:inline-flex;align-items:center;gap:9px;transition:all .3s;border:1px solid transparent;white-space:nowrap}
+.btn-primary{background:#fff;color:var(--bg)}
+.btn-primary:hover{background:linear-gradient(135deg,var(--indigo-soft),#fff);transform:translateY(-2px);box-shadow:0 10px 30px rgba(165,180,252,.25)}
+.btn-primary:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none;background:#fff}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--ink-2);border-color:var(--glass-border);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.btn-ghost:hover{background:rgba(255,255,255,.12);color:var(--ink)}
+
+/* ============ layout ============ */
+.wrap{max-width:1440px;margin:0 auto;padding:26px 28px 60px;display:flex;flex-direction:column;gap:18px}
+.grid{display:grid;gap:18px}
+.kpis{grid-template-columns:repeat(4,1fr)}
+.cols{grid-template-columns:1.7fr 1fr;align-items:start}
+@media(max-width:1024px){.kpis{grid-template-columns:repeat(2,1fr)}.cols{grid-template-columns:1fr}}
+@media(max-width:560px){.kpis{grid-template-columns:1fr}header{padding:14px 16px;flex-wrap:wrap}.wrap{padding:18px 14px 48px}.hide-sm{display:none}}
+
+/* glass card */
+.card{background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);border-radius:22px;padding:22px;position:relative;overflow:hidden}
+.card>h2{font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.2em;
+  color:var(--ink-3);margin:0 0 16px;display:flex;align-items:center;gap:9px}
+.card>h2::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--indigo-soft);box-shadow:0 0 8px var(--indigo)}
+
+/* KPI metric card */
+.kpi{min-height:132px;display:flex;flex-direction:column;justify-content:space-between}
+.kpi::before{content:'';position:absolute;top:-30%;right:-30%;width:150px;height:150px;
+  background:radial-gradient(circle,rgba(99,102,241,.25),transparent 70%);filter:blur(30px);opacity:0;transition:opacity .8s}
+.kpi:hover::before{opacity:1}
+.kpi .n{font-family:var(--font-sans);font-weight:500;font-size:clamp(34px,4vw,52px);letter-spacing:-.04em;line-height:1;
+  background:var(--grad-a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kpi .l{font-family:var(--font-body);font-size:12.5px;color:var(--ink-2);margin-top:12px}
+.kpi.k2 .n{background:linear-gradient(135deg,#fff,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.kpi.k3 .n{background:linear-gradient(135deg,#fff,var(--green));-webkit-background-clip:text;background-clip:text;color:transparent}
+.kpi.k4 .n{background:linear-gradient(135deg,#fff,var(--pink-soft));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* timeline */
+#timeline svg{width:100%;height:92px;display:block}
+#timeline rect{fill:url(#tlGrad)}
+
+/* severity bars */
+.sevbars{display:flex;flex-direction:column;gap:11px}
+.sevrow{display:grid;grid-template-columns:74px 1fr 30px;align-items:center;gap:10px}
+.sevrow .track{height:8px;border-radius:100px;background:rgba(255,255,255,.05);overflow:hidden}
+.sevrow .track>i{display:block;height:100%;border-radius:100px}
+.sevrow .val{font-family:var(--font-mono);font-size:12px;color:var(--ink-2);text-align:right}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:100px;font-family:var(--font-mono);
+  font-size:9.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+.pill::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+.sev-critical{color:var(--sev-critical);background:rgba(236,72,153,.14)}
+.sev-high{color:var(--sev-high);background:rgba(239,68,68,.14)}
+.sev-medium{color:var(--sev-medium);background:rgba(251,191,36,.14)}
+.sev-low{color:var(--sev-low);background:rgba(34,211,238,.14)}
+.sev-info{color:var(--sev-info);background:rgba(255,255,255,.06)}
+
+/* tables */
+table{width:100%;border-collapse:separate;border-spacing:0}
+td{padding:9px 6px;border-bottom:1px solid var(--line-2);font-size:13px;color:var(--ink-2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.ip{font-family:var(--font-mono);font-size:12.5px;color:var(--ink);letter-spacing:-.01em}
+.num{font-family:var(--font-mono);font-size:12.5px;text-align:right;color:var(--ink)}
+
+/* alert feed */
+.feed{display:flex;flex-direction:column;gap:11px;max-height:660px;overflow:auto;padding-right:4px}
+.alert{border:1px solid var(--line);border-left-width:3px;border-radius:16px;padding:14px 16px;
+  background:rgba(255,255,255,.03);transition:all .3s var(--ee)}
+.alert:hover{background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.18);transform:translateX(3px)}
+.alert.critical{border-left-color:var(--sev-critical)}
+.alert.high{border-left-color:var(--sev-high)}
+.alert.medium{border-left-color:var(--sev-medium)}
+.alert.low{border-left-color:var(--sev-low)}
+.alert.info{border-left-color:var(--sev-info)}
+.alert .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.alert .title{font-family:var(--font-sans);font-weight:500;font-size:15px;letter-spacing:-.01em}
+.alert .mitre{font-family:var(--font-mono);font-size:10.5px;color:var(--indigo-soft);letter-spacing:.06em;
+  background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.28);padding:2px 8px;border-radius:100px}
+.alert .meta{font-family:var(--font-body);font-size:12px;color:var(--ink-3);margin-top:7px}
+.alert .meta .ip{color:var(--ink-2)}
+.alert .evid{font-family:var(--font-mono);font-size:11px;color:var(--ink-4);margin-top:8px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:rgba(0,0,0,.2);padding:7px 10px;border-radius:9px}
+.empty{color:var(--ink-3);padding:26px;text-align:center;font-size:13px}
+
+/* entrance */
+.card{opacity:0;transform:translateY(18px);animation:cardIn .8s var(--ee) forwards}
+.wrap .card:nth-child(1){animation-delay:.05s}
+.grid.kpis .card:nth-child(2){animation-delay:.1s}
+.grid.kpis .card:nth-child(3){animation-delay:.15s}
+.grid.kpis .card:nth-child(4){animation-delay:.2s}
+@keyframes cardIn{to{opacity:1;transform:translateY(0)}}
+
+/* templatemo credit */
+.tm-credit{position:fixed;bottom:18px;right:22px;z-index:40;font-family:var(--font-mono);font-size:9.5px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--ink-4);text-decoration:none;display:flex;gap:8px;align-items:center;transition:color .25s}
+.tm-credit:hover{color:var(--ink-2)}
+.tm-credit .tm-dot{width:5px;height:5px;border-radius:50%;background:var(--pink-soft);box-shadow:0 0 10px var(--pink);animation:pip 2s infinite}
+@media(max-width:560px){.tm-credit{display:none}}
 </style>
 </head>
 <body>
+<div class="app">
 <header>
-  <h1>🛡️ Nightjar</h1>
-  <span class="sub">Detection-as-Code mini-SIEM</span>
+  <div class="brand"><span class="logo"></span> Nightjar <span class="sub hide-sm">Detection-as-Code SIEM</span></div>
   <span class="spacer"></span>
-  <span class="sub"><span class="dot" id="live"></span> live · updated <span id="updated">—</span></span>
-  <button class="ghost" id="pauseBtn">Pause</button>
-  <button id="replayBtn">▶ Replay attack</button>
+  <span class="live hide-sm"><span class="dot" id="live"></span> live · <span id="updated">—</span></span>
+  <button class="btn btn-ghost" id="pauseBtn">Pause</button>
+  <button class="btn btn-primary" id="replayBtn">▶ Replay attack</button>
 </header>
 
-<div class="wrap grid" style="gap:16px">
+<div class="wrap">
   <div class="grid kpis">
-    <div class="card kpi"><div class="n" id="k-alerts">—</div><div class="l">Total alerts</div></div>
-    <div class="card kpi"><div class="n" id="k-events">—</div><div class="l">Events parsed</div></div>
-    <div class="card kpi"><div class="n" id="k-rules">—</div><div class="l">Rules loaded</div></div>
-    <div class="card kpi"><div class="n" id="k-offenders">—</div><div class="l">Offending IPs</div></div>
+    <div class="card kpi k1"><div class="n" id="k-alerts">—</div><div class="l">Total alerts</div></div>
+    <div class="card kpi k2"><div class="n" id="k-events">—</div><div class="l">Events parsed</div></div>
+    <div class="card kpi k3"><div class="n" id="k-rules">—</div><div class="l">Rules loaded</div></div>
+    <div class="card kpi k4"><div class="n" id="k-offenders">—</div><div class="l">Offending IPs</div></div>
   </div>
 
   <div class="card">
@@ -96,8 +213,7 @@
       <h2>Live alert feed</h2>
       <div class="feed" id="feed"></div>
     </div>
-
-    <div class="grid" style="gap:16px">
+    <div class="grid" style="gap:18px">
       <div class="card">
         <h2>Alerts by severity</h2>
         <div class="sevbars" id="sev"></div>
@@ -113,6 +229,11 @@
     </div>
   </div>
 </div>
+</div>
+
+<a class="tm-credit" href="https://templatemo.com" target="_blank" rel="nofollow noopener" aria-label="Design by TemplateMo">
+  <span class="tm-dot"></span><span>Design: TemplateMo</span>
+</a>
 
 <script>
 const SEV = ["critical","high","medium","low","info"];
@@ -129,9 +250,7 @@ async function refresh(){
       fetch("/api/summary"), fetch("/api/alerts?limit=60")
     ]);
     if (!sumRes.ok || !alRes.ok) return;
-    const s = await sumRes.json();
-    const alerts = await alRes.json();
-    render(s, alerts);
+    render(await sumRes.json(), await alRes.json());
     $("updated").textContent = new Date().toLocaleTimeString();
   } catch(e){ /* keep last view */ }
 }
@@ -142,32 +261,27 @@ function render(s, alerts){
   $("k-rules").textContent = s.rules_loaded;
   $("k-offenders").textContent = s.top_offenders.length;
 
-  // severity bars
   const total = Object.values(s.by_severity).reduce((a,b)=>a+b,0) || 1;
   $("sev").innerHTML = SEV.filter(k => s.by_severity[k]).map(k => {
-    const v = s.by_severity[k];
-    const pct = Math.round(v/total*100);
+    const v = s.by_severity[k], pct = Math.round(v/total*100);
     return `<div class="sevrow"><span class="pill sev-${k}">${k}</span>
-      <div class="bar" style="width:${Math.max(pct,4)}%;background:var(--${k})"></div>
-      <span>${v}</span></div>`;
+      <div class="track"><i style="width:${Math.max(pct,4)}%;background:var(--sev-${k})"></i></div>
+      <span class="val">${v}</span></div>`;
   }).join("") || `<div class="empty">no alerts</div>`;
 
-  // offenders
   $("offenders").innerHTML = s.top_offenders.map(o =>
     `<tr><td class="ip">${esc(o.ip)}</td>
       <td><span class="pill sev-${sevRank(o.max_severity_rank)}">${sevRank(o.max_severity_rank)}</span></td>
-      <td style="text-align:right">${o.alerts}</td></tr>`).join("")
+      <td class="num">${o.alerts}</td></tr>`).join("")
     || `<tr><td class="empty">—</td></tr>`;
 
-  // rule hits
   $("rulehits").innerHTML = s.rule_hits.map(r =>
-    `<tr><td>${esc(r.title)}</td><td style="text-align:right">${r.hits}</td></tr>`).join("")
+    `<tr><td>${esc(r.title)}</td><td class="num">${r.hits}</td></tr>`).join("")
     || `<tr><td class="empty">—</td></tr>`;
 
-  // feed
   $("feed").innerHTML = alerts.map(a => {
     const when = new Date(a.timestamp).toLocaleString();
-    const mitre = (a.mitre||[]).length ? `<span class="mitre">${a.mitre.join(", ")}</span>` : "";
+    const mitre = (a.mitre||[]).length ? `<span class="mitre">${esc(a.mitre.join(" · "))}</span>` : "";
     const evid = a.events && a.events[0] ? esc(a.events[0].raw) : "";
     return `<div class="alert ${a.severity}">
       <div class="top"><span class="pill sev-${a.severity}">${a.severity}</span>
@@ -183,15 +297,17 @@ function render(s, alerts){
 function drawTimeline(tl){
   const w = 100, h = 60, n = tl.length;
   if (!n){ $("timeline").innerHTML = `<div class="empty">no data</div>`; return; }
-  const max = Math.max(1, ...tl.map(d => d.count));
-  const bw = w / n;
+  const max = Math.max(1, ...tl.map(d => d.count)), bw = w / n;
   const bars = tl.map((d,i) => {
     const bh = (d.count/max) * (h-6);
-    return `<rect x="${(i*bw).toFixed(2)}" y="${(h-bh).toFixed(2)}" width="${(bw*0.8).toFixed(2)}"
-      height="${bh.toFixed(2)}" fill="var(--accent)" rx="0.6"><title>${d.count} alerts</title></rect>`;
+    return `<rect x="${(i*bw).toFixed(2)}" y="${(h-bh).toFixed(2)}" width="${(bw*0.72).toFixed(2)}"
+      height="${bh.toFixed(2)}" rx="0.6"><title>${d.count} alerts</title></rect>`;
   }).join("");
   $("timeline").innerHTML =
-    `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:90px">${bars}</svg>`;
+    `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+       <defs><linearGradient id="tlGrad" x1="0" y1="0" x2="0" y2="1">
+         <stop offset="0%" stop-color="#a5b4fc"/><stop offset="100%" stop-color="#6366f1" stop-opacity=".55"/>
+       </linearGradient></defs>${bars}</svg>`;
 }
 
 $("replayBtn").addEventListener("click", async () => {
@@ -202,8 +318,8 @@ $("replayBtn").addEventListener("click", async () => {
 $("pauseBtn").addEventListener("click", () => {
   paused = !paused;
   $("pauseBtn").textContent = paused ? "Resume" : "Pause";
-  $("live").style.background = paused ? "var(--muted)" : "var(--ok)";
-  $("live").style.boxShadow = paused ? "none" : "0 0 8px var(--ok)";
+  $("live").style.background = paused ? "var(--ink-4)" : "var(--green)";
+  $("live").style.boxShadow = paused ? "none" : "0 0 10px var(--green)";
 });
 
 refresh();

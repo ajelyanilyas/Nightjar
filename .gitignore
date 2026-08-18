@@ -21,3 +21,6 @@ data/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Separate GitHub-profile repo that lives here only so it reaches the real disk
+profile/

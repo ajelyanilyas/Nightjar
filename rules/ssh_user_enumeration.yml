@@ -1,0 +1,15 @@
+id: ssh-user-enumeration
+title: SSH Username Enumeration
+severity: medium
+mitre: [T1589.001, T1110]
+description: >
+  Repeated failed logins for *invalid* users from one IP suggest the attacker
+  is spraying a username list to find valid accounts rather than guessing a
+  known account's password.
+detection:
+  event_type: ssh_failed_login
+  invalid_user: true
+correlation:
+  group_by: src_ip
+  count: 8
+  timeframe: 120

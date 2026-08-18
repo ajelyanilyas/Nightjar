@@ -1,0 +1,16 @@
+id: web-xss-attempt
+title: Cross-Site Scripting (XSS) Attempt
+severity: medium
+mitre: [T1059.007]
+description: >
+  A request containing typical reflected-XSS payload markers such as <script>
+  tags, javascript: URIs, or inline event handlers.
+detection:
+  event_type: http_request
+  target:
+    re:
+      - "<script"
+      - "javascript:"
+      - "onerror\\s*="
+      - "onload\\s*="
+      - "<img[^>]+src"

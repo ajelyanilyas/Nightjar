@@ -1,0 +1,16 @@
+id: web-path-traversal
+title: Path Traversal Attempt
+severity: high
+mitre: [T1190]
+description: >
+  A request attempting to escape the web root with ../ sequences or reaching for
+  sensitive files such as /etc/passwd or Windows win.ini.
+detection:
+  event_type: http_request
+  target:
+    re:
+      - "\\.\\./"
+      - "\\.\\.\\\\"
+      - "/etc/passwd"
+      - "boot\\.ini"
+      - "win\\.ini"

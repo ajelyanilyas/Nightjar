@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nightjar — mini-SIEM</title>
+<style>
+  :root {
+    --bg: #0b0f17; --panel: #121826; --panel2: #0e1420;
+    --border: #1f2a3d; --text: #e6edf6; --muted: #8aa0bd; --accent: #4ea1ff;
+    --critical: #d946ef; --high: #ef4444; --medium: #f59e0b; --low: #38bdf8; --info: #64748b;
+    --ok: #22c55e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.5 ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, monospace;
+  }
+  header {
+    display: flex; align-items: center; gap: 14px; padding: 14px 22px;
+    border-bottom: 1px solid var(--border); background: var(--panel2); position: sticky; top: 0; z-index: 5;
+  }
+  header h1 { font-size: 18px; margin: 0; letter-spacing: .5px; }
+  header .sub { color: var(--muted); font-size: 12px; }
+  header .spacer { flex: 1; }
+  button {
+    background: var(--accent); color: #04101f; border: 0; border-radius: 6px;
+    padding: 8px 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  button:disabled { opacity: .5; cursor: default; }
+  .wrap { padding: 20px; max-width: 1400px; margin: 0 auto; }
+  .grid { display: grid; gap: 16px; }
+  .kpis { grid-template-columns: repeat(4, 1fr); }
+  .cols { grid-template-columns: 1.6fr 1fr; align-items: start; }
+  @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2,1fr);} .cols{grid-template-columns:1fr;} }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 0 0 12px; }
+  .kpi .n { font-size: 30px; font-weight: 800; }
+  .kpi .l { color: var(--muted); font-size: 12px; }
+  .sevbars { display: flex; flex-direction: column; gap: 8px; }
+  .sevrow { display: grid; grid-template-columns: 70px 1fr 30px; align-items: center; gap: 8px; }
+  .sevrow .bar { height: 12px; border-radius: 6px; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .sev-critical { background: rgba(217,70,239,.15); color: var(--critical); }
+  .sev-high { background: rgba(239,68,68,.15); color: var(--high); }
+  .sev-medium { background: rgba(245,158,11,.15); color: var(--medium); }
+  .sev-low { background: rgba(56,189,248,.15); color: var(--low); }
+  .sev-info { background: rgba(100,116,139,.2); color: var(--info); }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  td.mono, .ip { font-variant-numeric: tabular-nums; }
+  .feed { display: flex; flex-direction: column; gap: 10px; max-height: 620px; overflow: auto; }
+  .alert { border: 1px solid var(--border); border-left-width: 4px; border-radius: 8px; padding: 10px 12px; background: var(--panel2); }
+  .alert.critical { border-left-color: var(--critical); }
+  .alert.high { border-left-color: var(--high); }
+  .alert.medium { border-left-color: var(--medium); }
+  .alert.low { border-left-color: var(--low); }
+  .alert.info { border-left-color: var(--info); }
+  .alert .top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .alert .title { font-weight: 700; }
+  .alert .meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .alert .evid { color: var(--muted); font-size: 11.5px; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .8; }
+  .mitre { color: var(--accent); font-size: 11px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); display: inline-block; box-shadow: 0 0 8px var(--ok); }
+  a { color: var(--accent); }
+  .empty { color: var(--muted); padding: 20px; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🛡️ Nightjar</h1>
+  <span class="sub">Detection-as-Code mini-SIEM</span>
+  <span class="spacer"></span>
+  <span class="sub"><span class="dot" id="live"></span> live · updated <span id="updated">—</span></span>
+  <button class="ghost" id="pauseBtn">Pause</button>
+  <button id="replayBtn">▶ Replay attack</button>
+</header>
+
+<div class="wrap grid" style="gap:16px">
+  <div class="grid kpis">
+    <div class="card kpi"><div class="n" id="k-alerts">—</div><div class="l">Total alerts</div></div>
+    <div class="card kpi"><div class="n" id="k-events">—</div><div class="l">Events parsed</div></div>
+    <div class="card kpi"><div class="n" id="k-rules">—</div><div class="l">Rules loaded</div></div>
+    <div class="card kpi"><div class="n" id="k-offenders">—</div><div class="l">Offending IPs</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Alert timeline</h2>
+    <div id="timeline"></div>
+  </div>
+
+  <div class="grid cols">
+    <div class="card">
+      <h2>Live alert feed</h2>
+      <div class="feed" id="feed"></div>
+    </div>
+
+    <div class="grid" style="gap:16px">
+      <div class="card">
+        <h2>Alerts by severity</h2>
+        <div class="sevbars" id="sev"></div>
+      </div>
+      <div class="card">
+        <h2>Top offending IPs</h2>
+        <table><tbody id="offenders"></tbody></table>
+      </div>
+      <div class="card">
+        <h2>Rule hit counts</h2>
+        <table><tbody id="rulehits"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SEV = ["critical","high","medium","low","info"];
+const $ = (id) => document.getElementById(id);
+let paused = false;
+
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function sevRank(r){ return SEV[SEV.length-1-r] || "info"; }
+
+async function refresh(){
+  if (paused) return;
+  try {
+    const [sumRes, alRes] = await Promise.all([
+      fetch("/api/summary"), fetch("/api/alerts?limit=60")
+    ]);
+    if (!sumRes.ok || !alRes.ok) return;
+    const s = await sumRes.json();
+    const alerts = await alRes.json();
+    render(s, alerts);
+    $("updated").textContent = new Date().toLocaleTimeString();
+  } catch(e){ /* keep last view */ }
+}
+
+function render(s, alerts){
+  $("k-alerts").textContent = s.total_alerts;
+  $("k-events").textContent = s.total_events;
+  $("k-rules").textContent = s.rules_loaded;
+  $("k-offenders").textContent = s.top_offenders.length;
+
+  // severity bars
+  const total = Object.values(s.by_severity).reduce((a,b)=>a+b,0) || 1;
+  $("sev").innerHTML = SEV.filter(k => s.by_severity[k]).map(k => {
+    const v = s.by_severity[k];
+    const pct = Math.round(v/total*100);
+    return `<div class="sevrow"><span class="pill sev-${k}">${k}</span>
+      <div class="bar" style="width:${Math.max(pct,4)}%;background:var(--${k})"></div>
+      <span>${v}</span></div>`;
+  }).join("") || `<div class="empty">no alerts</div>`;
+
+  // offenders
+  $("offenders").innerHTML = s.top_offenders.map(o =>
+    `<tr><td class="ip">${esc(o.ip)}</td>
+      <td><span class="pill sev-${sevRank(o.max_severity_rank)}">${sevRank(o.max_severity_rank)}</span></td>
+      <td style="text-align:right">${o.alerts}</td></tr>`).join("")
+    || `<tr><td class="empty">—</td></tr>`;
+
+  // rule hits
+  $("rulehits").innerHTML = s.rule_hits.map(r =>
+    `<tr><td>${esc(r.title)}</td><td style="text-align:right">${r.hits}</td></tr>`).join("")
+    || `<tr><td class="empty">—</td></tr>`;
+
+  // feed
+  $("feed").innerHTML = alerts.map(a => {
+    const when = new Date(a.timestamp).toLocaleString();
+    const mitre = (a.mitre||[]).length ? `<span class="mitre">${a.mitre.join(", ")}</span>` : "";
+    const evid = a.events && a.events[0] ? esc(a.events[0].raw) : "";
+    return `<div class="alert ${a.severity}">
+      <div class="top"><span class="pill sev-${a.severity}">${a.severity}</span>
+        <span class="title">${esc(a.title)}</span> ${mitre}</div>
+      <div class="meta">${when} · src <span class="ip">${esc(a.src_ip||"—")}</span> · ${a.count} event(s)</div>
+      ${evid ? `<div class="evid">${evid}</div>` : ""}
+    </div>`;
+  }).join("") || `<div class="empty">No alerts yet. Hit “Replay attack”.</div>`;
+
+  drawTimeline(s.timeline);
+}
+
+function drawTimeline(tl){
+  const w = 100, h = 60, n = tl.length;
+  if (!n){ $("timeline").innerHTML = `<div class="empty">no data</div>`; return; }
+  const max = Math.max(1, ...tl.map(d => d.count));
+  const bw = w / n;
+  const bars = tl.map((d,i) => {
+    const bh = (d.count/max) * (h-6);
+    return `<rect x="${(i*bw).toFixed(2)}" y="${(h-bh).toFixed(2)}" width="${(bw*0.8).toFixed(2)}"
+      height="${bh.toFixed(2)}" fill="var(--accent)" rx="0.6"><title>${d.count} alerts</title></rect>`;
+  }).join("");
+  $("timeline").innerHTML =
+    `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:90px">${bars}</svg>`;
+}
+
+$("replayBtn").addEventListener("click", async () => {
+  const b = $("replayBtn"); b.disabled = true; b.textContent = "Replaying…";
+  try { await fetch("/api/replay?scenario=full", {method:"POST"}); await refresh(); }
+  finally { b.disabled = false; b.textContent = "▶ Replay attack"; }
+});
+$("pauseBtn").addEventListener("click", () => {
+  paused = !paused;
+  $("pauseBtn").textContent = paused ? "Resume" : "Pause";
+  $("live").style.background = paused ? "var(--muted)" : "var(--ok)";
+  $("live").style.boxShadow = paused ? "none" : "0 0 8px var(--ok)";
+});
+
+refresh();
+setInterval(refresh, 4000);
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+id: web-scanner-user-agent
+title: Known Web Scanner / Attack Tool
+severity: medium
+mitre: [T1595.002]
+description: >
+  Request carrying the user-agent of a well-known scanning or exploitation tool
+  (sqlmap, nikto, nmap, dirbuster, etc.). Rarely legitimate traffic.
+detection:
+  event_type: http_request
+  user_agent:
+    icontains:
+      - sqlmap
+      - nikto
+      - nmap
+      - masscan
+      - dirbuster
+      - gobuster
+      - wpscan
+      - acunetix
+      - nessus
+      - "python-requests"
+      - curl

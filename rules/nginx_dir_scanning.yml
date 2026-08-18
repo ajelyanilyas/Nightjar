@@ -1,0 +1,14 @@
+id: web-directory-scanning
+title: Web Directory / Content Scanning
+severity: medium
+mitre: [T1595.003]
+description: >
+  A burst of 404s from a single IP in a short window — the signature of a
+  directory or content-discovery brute force looking for hidden endpoints.
+detection:
+  event_type: http_request
+  status: 404
+correlation:
+  group_by: src_ip
+  count: 15
+  timeframe: 30

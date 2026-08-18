@@ -1,0 +1,13 @@
+id: ssh-bruteforce
+title: SSH Brute Force
+severity: high
+mitre: [T1110]
+description: >
+  Five or more failed SSH logins from a single source IP within 60 seconds,
+  indicating a password-guessing attack against the SSH service.
+detection:
+  event_type: ssh_failed_login
+correlation:
+  group_by: src_ip
+  count: 5
+  timeframe: 60

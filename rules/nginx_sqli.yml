@@ -1,0 +1,18 @@
+id: web-sqli-attempt
+title: SQL Injection Attempt
+severity: high
+mitre: [T1190]
+description: >
+  An HTTP request whose path or query contains classic SQL-injection markers
+  (UNION SELECT, boolean tautologies, SQL comments, time-based sleep payloads).
+detection:
+  event_type: http_request
+  target:
+    re:
+      - "union\\s+select"
+      - "or\\s+1\\s*=\\s*1"
+      - "'\\s*or\\s*'"
+      - "sleep\\s*\\("
+      - "information_schema"
+      - "--\\s"
+      - "/\\*.*\\*/"

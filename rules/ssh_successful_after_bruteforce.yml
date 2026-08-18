@@ -1,0 +1,10 @@
+id: ssh-success-from-bruteforcer
+title: Successful SSH Login (watch for follow-through)
+severity: medium
+mitre: [T1078]
+description: >
+  A successful SSH login. On its own this is benign, but correlated with a
+  brute-force alert from the same source IP it may indicate a compromised
+  account. Surfaced so an analyst can pivot on the source IP.
+detection:
+  event_type: ssh_accepted_login
